@@ -28,9 +28,7 @@ public class MainActivity extends AppCompatActivity {
             broadcastReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-
                     textView.append("\n" +intent.getExtras().get("coordinates"));
-
                 }
             };
         }

@@ -30,6 +30,8 @@ public class GPS_Service extends Service {
 
     private LocationListener listener;
     private LocationManager locationManager;
+    private static double longitude;
+    private static double latitude;
     private RequestQueue requestQueue;
     private static final String REQUEST_URL = "http://10.0.2.2:3000/gps_data";
 
@@ -47,11 +49,13 @@ public class GPS_Service extends Service {
                 @Override
                 public void onLocationChanged(final Location location) {
                     Intent i = new Intent("location_update");
-                    i.putExtra("coordinates",location.getLongitude()+" "+location.getLatitude());
+                    i.putExtra("coordinates","Longitude: " + location.getLongitude()+"\nLatitude: "+location.getLatitude());
                     sendBroadcast(i);
 
                     // Sending to server
                     Map<String, String> params = new HashMap();
+                    params.put("origin", "demo-app");
+                    params.put("userId", "demo-user");
                     params.put("longitude", String.valueOf(location.getLongitude()));
                     params.put("latitude", String.valueOf(location.getLatitude()));
 
@@ -93,7 +97,9 @@ public class GPS_Service extends Service {
 
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         //noinspection MissingPermission
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,3000,0,listener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,listener);
+
+
 
     }
 
