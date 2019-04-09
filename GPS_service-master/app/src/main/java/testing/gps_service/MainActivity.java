@@ -11,15 +11,55 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button btn_start, btn_stop;
     private TextView textView;
     private BroadcastReceiver broadcastReceiver;
+    static Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket("http://10.0.2.2:3000/");
+        } catch (URISyntaxException e) {
+            // TODO: error handling
+            System.out.println("ggg");
+        }
+    }
+
+
+    public Emitter.Listener onServerUpdate = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    String update;
+                    try {
+                        update = data.getString("update");
+                    } catch (JSONException e) {
+                        return;
+                    }
+                    //TODO - do something
+                    Log.i("Server Update", update);
+                }
+            });
+        }
+    };
 
     @Override
     protected void onResume() {
@@ -36,25 +76,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        btn_start = findViewById(R.id.button);
+        btn_stop = findViewById(R.id.button2);
+        textView = findViewById(R.id.textView);
+
+        if(!runtime_permissions()) {
+            enable_buttons();
+        }
+        mSocket.on("server_update", onServerUpdate);
+        mSocket.connect();
+        mSocket.emit("user_gps_data");
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if(broadcastReceiver != null){
             unregisterReceiver(broadcastReceiver);
         }
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        btn_start = (Button) findViewById(R.id.button);
-        btn_stop = (Button) findViewById(R.id.button2);
-        textView = (TextView) findViewById(R.id.textView);
-
-        if(!runtime_permissions())
-            enable_buttons();
-
+        mSocket.off("server_update", onServerUpdate);
+        mSocket.disconnect();
     }
 
     private void enable_buttons() {

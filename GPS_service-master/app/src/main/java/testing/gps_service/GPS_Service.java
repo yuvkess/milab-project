@@ -11,27 +11,28 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
 
 public class GPS_Service extends Service {
 
     private LocationListener listener;
     private LocationManager locationManager;
-    private static double longitude;
-    private static double latitude;
     private RequestQueue requestQueue;
     private static final String REQUEST_URL = "http://10.0.2.2:3000/gps_data";
 
@@ -48,33 +49,41 @@ public class GPS_Service extends Service {
             listener = new LocationListener() {
                 @Override
                 public void onLocationChanged(final Location location) {
+
                     Intent i = new Intent("location_update");
                     i.putExtra("coordinates","Longitude: " + location.getLongitude()+"\nLatitude: "+location.getLatitude());
                     sendBroadcast(i);
 
-                    // Sending to server
                     Map<String, String> params = new HashMap();
                     params.put("origin", "demo-app");
                     params.put("userId", "demo-user");
+                    params.put("timestamp", "" + System.currentTimeMillis());
                     params.put("longitude", String.valueOf(location.getLongitude()));
                     params.put("latitude", String.valueOf(location.getLatitude()));
+                    params.put("speed", String.valueOf(location.getSpeed()));
 
                     JSONObject parameters = new JSONObject(params);
 
-                    JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, REQUEST_URL, parameters, new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            //TODO: handle success
-                        }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            error.printStackTrace();
-                            //TODO: handle failure
-                        }
-                    });
 
-                    requestQueue.add(jsonRequest);
+                    if(MainActivity.mSocket.connected()){
+                        // Sending to server via socket io
+                        MainActivity.mSocket.emit("user_gps_data", parameters);
+                    } else {
+                        // Sending to server via http request
+                        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, REQUEST_URL, parameters, new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                //TODO: handle success
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                error.printStackTrace();
+                                //TODO: handle failure
+                            }
+                        });
+                        requestQueue.add(jsonRequest);
+                    }
                 }
 
                 @Override
@@ -95,11 +104,9 @@ public class GPS_Service extends Service {
                 }
             };
 
-        locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        //noinspection MissingPermission
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,listener);
-
-
+            locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+            //noinspection MissingPermission
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,listener);
 
     }
 

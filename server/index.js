@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 const bodyParser = require('body-parser');
-const https = require('https');
+const request = require('request');
 const UserDataHandler = require('./UserDataHandler');
 const userDataHandler = new UserDataHandler();
 
@@ -28,6 +30,10 @@ let dataTemplate = `<?xml version="1.0" ?>
 
 app.use(bodyParser.json());
 
+server.listen(3000, () => {
+	console.log('Listening on port 3000!');
+});
+
 app.post('/gps_data',(req, res) => {
 	data = req.body;
 	userDataHandler.insertCoordinates(data);
@@ -42,37 +48,39 @@ app.post('/get_api_data',(req, res) => {
   	res.end("yo");
 });
 
-app.listen(3000, () => {
- 	console.log('Listening on port 3000!');
-});
-
 function getApiData(data) {
-	let options = {
-		hostname: 'http://siri.motrealtime.co.il',
-		port: 8081,
-		path: '/Siri/SiriServices',
+	request({
+		url: 'http://siri.motrealtime.co.il:8081/Siri/SiriServices',
 		method: 'POST',
 		headers: {
 			'Content-Type': 'text/xml',
-		  	'Accept': 'text/xml',
+			'Accept': 'text/xml',
 			'Accept': 'multipart/related',
 			'Content-Length': data.length
+		},
+		body: data
+	}, function(err, res, body){
+		if (err) {
+			console.log(err);
 		}
-	}
-	  
-	let req = https.request(options, (res) => {
-		console.log(`statusCode: ${res.statusCode}`);
-	  
-		res.on('data', (d) => {
-		  	process.stdout.write(d);
-		})
+		console.log(res.body);
 	})
-	  
-	req.on('error', (error) => {
-		console.error(error);
-	})
-	  
-	req.write(data);
-	req.end();
 }
 
+io.on('connection', (socket)=>{
+	var updates = ['you are on a bus', 'you got off the bus' , 'you are on a bird', 'you got off the bird'];
+	var index = -1;
+	console.log('connected');
+
+	socket.on("user_gps_data", function(data){
+		if (data){
+			console.log('data was received from socket io');
+			userDataHandler.insertCoordinates(data);
+		}
+	})
+
+	serverUpdate = setInterval(()=>{
+		index = (index + 1) % 3;
+		socket.emit('server_update', {update: `${updates[index]}`});
+	}, 30000);
+});

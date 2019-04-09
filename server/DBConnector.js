@@ -13,10 +13,16 @@ class DBConnector {
 
     saveDataToDb(data) {
         console.log(data);
-        this.collection.insertOne(data, function(err, res) {
-          if (err) throw err;
-          console.log("1 document inserted");
-      });
+        if (data) {
+            this.collection.insertOne({
+                timestamp: data.timestamp,
+                userid: data.userId,
+                loc : { type: "Point", coordinates: [ data.longitude, data.latitude ] }
+            }, function(err, res) {
+              if (err) throw err;
+              console.log("1 document inserted");
+            });
+        }
     }
 }
 

@@ -22,7 +22,7 @@ class UserDataHandler {
         this.lastCoordinates = data;
     }
 
-    subscribe(eventName) {
+    subscribe(eventName, cb) {
         // dispatch event
     }
 }
