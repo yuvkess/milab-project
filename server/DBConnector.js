@@ -1,28 +1,37 @@
 const MongoClient = require('mongodb').MongoClient;
+const EventEmitter = require('events');
 
-class DBConnector {
+class DBConnector extends EventEmitter {
     constructor(collectionName) {
+        super();
+        this.setMaxListeners(50);
         this.uri = "mongodb+srv://milab-app:1234@milab-project-cluster-02wm4.mongodb.net/test?retryWrites=true";
         this.mongoClient = new MongoClient(this.uri, { useNewUrlParser: true });
         this.mongoClient.connect(function(err, client){
             if (err) {throw err;}
+            this.mongoClient = client;
             this.dbo = client.db("milab-project-db");
             this.collection = this.dbo.collection(collectionName);
+            this.emit('client connected');
         }.bind(this));
     }
 
     saveDataToDb(data) {
         console.log(data);
-        if (data) {
-            this.collection.insertOne({
-                timestamp: data.timestamp,
-                userid: data.userId,
-                loc : { type: "Point", coordinates: [ data.longitude, data.latitude ] }
-            }, function(err, res) {
-              if (err) throw err;
-              console.log("1 document inserted");
+        if (!this.collection){
+            this.handleNotConnected(data);
+        } else if (data) {
+            this.collection.insertOne(data, function(err, res) {
+                if (err) throw err;
+                console.log(`1 document inserted: ${data}`);
             });
         }
+    }
+
+    handleNotConnected(data){
+        this.on('client connected', function(data){
+            this.saveDataToDb(data);
+        }.bind(this, data))
     }
 }
 
