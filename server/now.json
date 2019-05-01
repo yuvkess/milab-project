@@ -1,4 +1,4 @@
 {
     "version": 2,
-    "routes": [{ "src": "/", "methods": ["POST","GET"], "dest": "/index.js" }]
+    "routes": [{ "src": "/gps_data", "methods": ["POST","GET"], "dest": "/index.js" }]
   }
