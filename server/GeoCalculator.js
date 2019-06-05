@@ -1,8 +1,10 @@
-import Point from './Point';
+const Point = require('./Point');
+const radius =  6371e3;
+
+// https://www.movable-type.co.uk/scripts/latlong.html
 
 class GeoCalculator{
-    static radius =  6371e3;
-    static intermediatePointTo(start, end, fraction) {
+    static intermediatePointTo(start, end, fraction, timestamp) {
         var latDifference = end.latRad - start.latRad;
         var lonDifference = end.lonRad - start.lonRad;
         var a = Math.sin(latDifference/2) * Math.sin(latDifference/2)
@@ -22,9 +24,10 @@ class GeoCalculator{
         var lat = toDeg(newLatRad);
         var lon = toDeg(newLonRad);
 
-        return new Point(lat, lon, newLatRad, newLonRad);
+        return new Point(lat, lon, timestamp, newLatRad, newLonRad);
     }
 
+    // in meters
     static calcDistance(p1, p2) {
         var differenceLatRad = toRad(p2.lat-p1.lat);
         var differenceLonRad = toRad(p2.lon-p1.lon);

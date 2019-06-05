@@ -14,6 +14,13 @@ class DBConnector extends EventEmitter {
             this.collection = this.dbo.collection(collectionName);
             this.emit('client connected');
         }.bind(this));
+        this.emit('ready');
+    }
+
+    handleNotConnected(data){
+        this.on('client connected', function(data){
+            this.saveDataToDb(data);
+        }.bind(this, data))
     }
 
     saveDataToDb(data) {
@@ -28,10 +35,13 @@ class DBConnector extends EventEmitter {
         }
     }
 
-    handleNotConnected(data){
-        this.on('client connected', function(data){
-            this.saveDataToDb(data);
-        }.bind(this, data))
+    find(findParams, cb){
+        this.collection.find(findParams).sort({'timestamp': 1}).toArray(function(err, documents) {
+            if(err){
+                //DO SOMETHING
+            }
+            cb(documents);
+        });
     }
 }
 
