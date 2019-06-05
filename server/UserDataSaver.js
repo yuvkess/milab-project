@@ -1,10 +1,8 @@
 const DBConnector = require('./DBConnector.js');
-const EventEmitter = require('events');
 const userCoordinatesData = new DBConnector('gps-data-user');
 
-class UserDataSaver extends EventEmitter{
+class UserDataSaver{
     constructor(io) {
-        super();
         this.numberOfCoordinates = 0;
         this.numberOfDifferentCoordinates = 0;
         this.lastCoordinates = {};
@@ -14,7 +12,7 @@ class UserDataSaver extends EventEmitter{
     initSocket(io){
         this.io = io;
         this.io.on('connection', (socket)=>{
-            var updates = ['you are on a bus', 'you got off the bus' , 'you are on a bird', 'you got off the bird'];
+            var updates = ['ON_BUS', 'OFF_BUS'];
             var index = -1;
             console.log('connected');
         
@@ -46,7 +44,7 @@ class UserDataSaver extends EventEmitter{
         return {
             _id: `${data.timestamp}_${Date.now()}`,
             sessionId: '//TODO??',
-            timestamp: data.timestamp,
+            timestamp: Number(data.timestamp),
             userid: data.userId,
             loc : { type: "Point", coordinates: [ data.longitude, data.latitude ] }
         }
