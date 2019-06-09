@@ -34,7 +34,7 @@ public class GPS_Service extends Service {
     private LocationListener listener;
     private LocationManager locationManager;
     private RequestQueue requestQueue;
-    private static final String REQUEST_URL = "http://10.0.2.2:3000/gps_data";
+    private static final String REQUEST_URL = "https://georgy-server.now.sh/gps_data";
 
     @Nullable
     @Override
