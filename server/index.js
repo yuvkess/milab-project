@@ -20,10 +20,11 @@ app.post('/gps_data',(req, res) => {
   	res.end("yo");
 });
 
-app.post('/activity_update',(req, res) => {
+app.post('/activity_transition',(req, res) => {
 	data = req.body;
-	if(data.activityType){
-		new Matcher(data);
+	if(data.activityTransition){
+		console.log(data.activityTransition);
+		// new Matcher(data);
 	}
   	res.writeHead(200);
 	res.end(data.activityType);

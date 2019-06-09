@@ -18,13 +18,20 @@ class UserDataSaver{
         
             socket.on("user_gps_data", function(data){
                 if (data){
-                    console.log('data was received from socket io');
+                    console.log('user data was received from socket io');
                     this.insertCoordinates(data);
                 }
-            }. bind(this))
+            }.bind(this));
+
+            socket.on("activity_transition", function(data){
+                if (data){
+                    console.log('activity transition was received from socket io');
+                    console.log(data.activityTransition);
+                }
+            }.bind(this))
         
             var serverUpdate = setInterval(()=>{
-                index = (index + 1) % 3;
+                index = (index + 1) % updates.length;
                 socket.emit('server_update', {update: `${updates[index]}`});
             }, 30000);
         });
